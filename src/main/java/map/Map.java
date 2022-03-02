@@ -1,6 +1,8 @@
-package map;
+package map;  // 包
 
+// 接口、内部接口
 public interface Map<K, V> {
+  // 接口的方法签名
   int size();
 
   boolean isEmpty();

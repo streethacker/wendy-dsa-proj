@@ -2,25 +2,39 @@ package map;
 
 import java.util.Objects;
 
+// 类、类实现接口
+// 泛型
 public class HashMap<K, V> implements Map<K, V> {
 
+  // 静态属性
+  // 访问修饰符
+  // final关键字
   private static final int DEFAULT_INITIAL_CAPACITY = 1 << 4;
 
   private static final int MAXIMUM_CAPACITY = 1 << 30;
 
   private static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
+  // 属性
   private int size = 0;
   private int capacity = 0;
   private final float loadFactor;
   private int threshold;
+
+  // 泛型数组
   private Node<K, V>[] table;
 
+  // 静态内部类
+  // 和实例无关
   static class Node<K, V> implements Map.Entry<K, V> {
+    // final 是防止key被修改 -> 常量
     final K key;
     V value;
     Node<K, V> next;
 
+    /*
+     * 无参构造方法就不能用了
+     */
     Node(K key, V value, Node<K, V> next) {
       this.key = key;
       this.value = value;
@@ -70,8 +84,10 @@ public class HashMap<K, V> implements Map<K, V> {
     }
   }
 
+  // 构造方法、构造方法重载
   public HashMap(int initialCapacity, float loadFactor) {
     if (initialCapacity < 0) {
+      // 异常机制
       throw new IllegalArgumentException("Illegal initial capacity: " + initialCapacity);
     }
     if (initialCapacity > MAXIMUM_CAPACITY) {
@@ -101,6 +117,7 @@ public class HashMap<K, V> implements Map<K, V> {
     return size == 0;
   }
 
+  // 方法覆写
   @Override
   public V get(K key) {
     Node<K, V> node = getNode(key);
@@ -173,6 +190,7 @@ public class HashMap<K, V> implements Map<K, V> {
     return newTab;
   }
 
+  // 链表遍历、插入、删除
   private V putVal(Node<K, V>[] table, K key, V value, boolean trans) {
     int i = getSlot(key, table.length);
     Node<K, V> p = table[i];
