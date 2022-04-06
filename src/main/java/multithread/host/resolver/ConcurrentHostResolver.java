@@ -1,4 +1,4 @@
-package multithread;
+package multithread.host.resolver;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
