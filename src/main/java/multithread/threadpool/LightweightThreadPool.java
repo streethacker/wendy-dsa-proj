@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class LightweightThreadPool implements ThreadPoolService {
 
-  private static final long defaultTaskPollingIntervalMilli = 10;
-  private static final long defaultAwaitCheckIntervalMilli = 10;
+  private static final long defaultTaskPollingIntervalMillis = 10;
+  private static final long defaultAwaitCheckIntervalMillis = 10;
 
   /** 任务队列 */
   private LinkedBlockingQueue<Runnable> taskQueue;
@@ -19,22 +19,23 @@ public class LightweightThreadPool implements ThreadPoolService {
   /** 工作线程 */
   private ArrayList<PoolWorker> workers;
 
-  /** 当任务队列中没有任务时，工作线程阻塞，间隔 {@code taskPollingInterval} 毫秒后，重新尝试从taskQueue获取任务 */
-  private long taskPollingInterval;
+  /** 当任务队列中没有任务时，工作线程阻塞，间隔 {@code taskPollingIntervalMillis} 毫秒后，重新尝试从taskQueue获取任务 */
+  private long taskPollingIntervalMillis;
 
   /** {@code awaitTermination} 调用后，遍历worker线程检查是否退出，两次检查之间的等待时间，单位毫秒 */
-  private long awaitCheckInterval;
+  private long awaitCheckIntervalMillis;
 
   public LightweightThreadPool(int poolSize) {
-    this(poolSize, defaultTaskPollingIntervalMilli, defaultAwaitCheckIntervalMilli);
+    this(poolSize, defaultTaskPollingIntervalMillis, defaultAwaitCheckIntervalMillis);
   }
 
-  public LightweightThreadPool(int poolSize, long taskPollingInterval, long awaitCheckInterval) {
+  public LightweightThreadPool(
+      int poolSize, long taskPollingIntervalMillis, long awaitCheckIntervalMillis) {
     this.taskQueue = new LinkedBlockingQueue<>();
     this.isShutdown = new AtomicBoolean(true);
     this.workers = new ArrayList<>(poolSize);
-    this.taskPollingInterval = taskPollingInterval;
-    this.awaitCheckInterval = awaitCheckInterval;
+    this.taskPollingIntervalMillis = taskPollingIntervalMillis;
+    this.awaitCheckIntervalMillis = awaitCheckIntervalMillis;
     for (int i = 0; i < poolSize; i++) {
       PoolWorker worker = new PoolWorker("LightweightThreadPool||thread[#" + i + "]");
       worker.start();
@@ -61,8 +62,8 @@ public class LightweightThreadPool implements ThreadPoolService {
       throw new ThreadPoolServiceException(
           "Illegal thread pool state: must shutdown the thread pool before calling awaitTermination");
     }
-    long current = System.currentTimeMillis();
-    while (System.currentTimeMillis() - current <= timeout) {
+    long currentTimeMillis = System.currentTimeMillis();
+    while (System.currentTimeMillis() - currentTimeMillis <= timeout) {
       boolean terminated = true;
       for (Thread t : workers) {
         if (t.isAlive()) {
@@ -73,7 +74,7 @@ public class LightweightThreadPool implements ThreadPoolService {
       if (terminated) {
         return;
       }
-      Thread.sleep(awaitCheckInterval);
+      Thread.sleep(awaitCheckIntervalMillis);
     }
     throw new AwaitTimeoutException(
         "Unable to terminate the thread pool before the specified timeout: " + timeout + "ms");
@@ -103,7 +104,7 @@ public class LightweightThreadPool implements ThreadPoolService {
     public void run() {
       while (isShutdown.get() || !taskQueue.isEmpty()) {
         Runnable runnable = null;
-        while ((runnable = poll(taskPollingInterval, TimeUnit.MILLISECONDS)) != null) {
+        while ((runnable = poll(taskPollingIntervalMillis, TimeUnit.MILLISECONDS)) != null) {
           runnable.run();
         }
       }
