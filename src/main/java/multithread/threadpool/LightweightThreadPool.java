@@ -44,7 +44,7 @@ public class LightweightThreadPool implements ThreadPoolService {
   }
 
   @Override
-  public synchronized void execute(Runnable runnable) throws InterruptedException {
+  public synchronized void execute(Runnable runnable) {
     if (!checkState()) {
       throw new ThreadPoolServiceException("Illegal thread pool state: already shutdown");
     }

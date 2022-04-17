@@ -1,7 +1,7 @@
 package multithread.threadpool;
 
 public interface ThreadPoolService {
-  void execute(Runnable runnable) throws InterruptedException;
+  void execute(Runnable runnable);
 
   void shutdown();
 
