@@ -32,7 +32,7 @@ public class LightweightThreadPool implements ThreadPoolService {
   public LightweightThreadPool(
       int poolSize, long taskPollingIntervalMillis, long awaitCheckIntervalMillis) {
     this.taskQueue = new LinkedBlockingQueue<>();
-    this.isShutdown = new AtomicBoolean(true);
+    this.isShutdown = new AtomicBoolean(false);
     this.workers = new ArrayList<>(poolSize);
     this.taskPollingIntervalMillis = taskPollingIntervalMillis;
     this.awaitCheckIntervalMillis = awaitCheckIntervalMillis;
@@ -45,20 +45,20 @@ public class LightweightThreadPool implements ThreadPoolService {
 
   @Override
   public synchronized void execute(Runnable runnable) {
-    if (!checkState()) {
+    if (isShutdown.get()) {
       throw new ThreadPoolServiceException("Illegal thread pool state: already shutdown");
     }
     taskQueue.offer(runnable);
   }
 
   @Override
-  public void shutdown() {
-    isShutdown.set(false);
+  public synchronized void shutdown() {
+    isShutdown.set(true);
   }
 
   @Override
   public void awaitTermination(long timeout) throws AwaitTimeoutException, InterruptedException {
-    if (checkState()) {
+    if (!isShutdown.get()) {
       throw new ThreadPoolServiceException(
           "Illegal thread pool state: must shutdown the thread pool before calling awaitTermination");
     }
@@ -80,10 +80,6 @@ public class LightweightThreadPool implements ThreadPoolService {
         "Unable to terminate the thread pool before the specified timeout: " + timeout + "ms");
   }
 
-  private boolean checkState() {
-    return isShutdown.get();
-  }
-
   @SuppressWarnings("SameParameterValue")
   private Runnable poll(long timeout, TimeUnit unit) {
     Runnable runnable = null;
@@ -102,7 +98,7 @@ public class LightweightThreadPool implements ThreadPoolService {
 
     @Override
     public void run() {
-      while (isShutdown.get() || !taskQueue.isEmpty()) {
+      while (!isShutdown.get() || !taskQueue.isEmpty()) {
         Runnable runnable = null;
         while ((runnable = poll(taskPollingIntervalMillis, TimeUnit.MILLISECONDS)) != null) {
           runnable.run();
@@ -118,7 +114,7 @@ public class LightweightThreadPool implements ThreadPoolService {
       poolService.execute(
           () -> {
             try {
-              Thread.sleep(100);
+              Thread.sleep(1000);
               System.out.println(Thread.currentThread().getName() + " => " + "Number: " + j);
             } catch (InterruptedException e) {
               e.printStackTrace();
