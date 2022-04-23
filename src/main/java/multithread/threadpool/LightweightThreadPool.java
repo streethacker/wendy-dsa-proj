@@ -4,11 +4,18 @@ import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class LightweightThreadPool implements ThreadPoolService {
 
   private static final long defaultTaskPollingIntervalMillis = 10;
   private static final long defaultAwaitCheckIntervalMillis = 10;
+
+  private final ReadWriteLock rwlock = new ReentrantReadWriteLock();
+  private final Lock rlock = rwlock.readLock();
+  private final Lock wlock = rwlock.writeLock();
 
   /** 任务队列 */
   private LinkedBlockingQueue<Runnable> taskQueue;
@@ -44,16 +51,26 @@ public class LightweightThreadPool implements ThreadPoolService {
   }
 
   @Override
-  public synchronized void execute(Runnable runnable) {
-    if (isShutdown.get()) {
-      throw new ThreadPoolServiceException("Illegal thread pool state: already shutdown");
+  public void execute(Runnable runnable) {
+    rlock.lock();
+    try {
+      if (isShutdown.get()) {
+        throw new ThreadPoolServiceException("Illegal thread pool state: already shutdown");
+      }
+      taskQueue.offer(runnable);
+    } finally {
+      rlock.unlock();
     }
-    taskQueue.offer(runnable);
   }
 
   @Override
-  public synchronized void shutdown() {
-    isShutdown.set(true);
+  public void shutdown() {
+    wlock.lock();
+    try {
+      isShutdown.set(true);
+    } finally {
+      wlock.unlock();
+    }
   }
 
   @Override
