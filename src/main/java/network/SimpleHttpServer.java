@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class SimpleHttpServer {
 
   private static final String[] SIGNALS = new String[] {"TERM", "HUP", "INT"};
+  private static final List<String> METHODS = Arrays.asList("GET", "POST", "PUT", "DELETE");
 
   private final int port;
   private final int backlog;
@@ -109,6 +111,71 @@ public class SimpleHttpServer {
     }
   }
 
+  public static class Response {
+
+    private String version;
+
+    private String status;
+
+    private String description;
+
+    private Map<String, String> headers;
+
+    private byte[] body;
+
+    public void addHeader(String key, String value) {
+      headers.put(key, value);
+    }
+
+    public String getHeader(String key, String defaultValue) {
+      String value = headers.get(key);
+      if (null != value) {
+        return value;
+      }
+      return defaultValue;
+    }
+
+    public String getVersion() {
+      return version;
+    }
+
+    public void setVersion(String version) {
+      this.version = version;
+    }
+
+    public String getStatus() {
+      return status;
+    }
+
+    public void setStatus(String status) {
+      this.status = status;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public void setDescription(String description) {
+      this.description = description;
+    }
+
+    public Map<String, String> getHeaders() {
+      return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+      this.headers = headers;
+    }
+
+    public byte[] getBody() {
+      return body;
+    }
+
+    public void setBody(byte[] body) {
+      this.body = body;
+    }
+  }
+
   public SimpleHttpServer(int port, int backlog) {
     if (port < 0 || port > 0xFFFF) {
       throw new IllegalArgumentException("Port value out of range: " + port);
@@ -162,9 +229,10 @@ public class SimpleHttpServer {
                 Request request = new Request();
                 byte[] body;
                 String line;
-                int i = 0;
+                boolean isFirstLine = true;
                 while (!isBlank(line = getLine(in))) {
-                  if ((++i) == 1) {
+                  if (isFirstLine) {
+                    isFirstLine = false;
                     String[] partition = line.split(" ", 3);
                     request.setMethod(partition[0]);
                     request.setPath(partition[1]);
@@ -189,7 +257,7 @@ public class SimpleHttpServer {
     return t;
   }
 
-  private void handleRequest(Request request, Socket socket) {
+  private void handleRequest(Request request, Socket connection) {
     System.out.println(request);
   }
 
