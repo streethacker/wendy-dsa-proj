@@ -23,7 +23,7 @@ public class SimpleHttpServer {
   private boolean isAlive;
   private List<Thread> workerThreads;
 
-  public static class Request {
+  public static class HttpRequest {
 
     private String method;
 
@@ -35,7 +35,7 @@ public class SimpleHttpServer {
 
     private byte[] body;
 
-    public Request() {
+    public HttpRequest() {
       headers = new HashMap<>();
     }
 
@@ -93,7 +93,7 @@ public class SimpleHttpServer {
 
     @Override
     public String toString() {
-      return "Request{"
+      return "HttpRequest{"
           + "method='"
           + method
           + '\''
@@ -111,7 +111,7 @@ public class SimpleHttpServer {
     }
   }
 
-  public static class Response {
+  public static class HttpResponse {
 
     private String version;
 
@@ -226,7 +226,7 @@ public class SimpleHttpServer {
         new Thread(
             () -> {
               try (BufferedInputStream in = new BufferedInputStream(connection.getInputStream())) {
-                Request request = new Request();
+                HttpRequest request = new HttpRequest();
                 byte[] body;
                 String line;
                 boolean isFirstLine = true;
@@ -257,7 +257,7 @@ public class SimpleHttpServer {
     return t;
   }
 
-  private void handleRequest(Request request, Socket connection) {
+  private void handleRequest(HttpRequest request, Socket connection) {
     System.out.println(request);
   }
 
