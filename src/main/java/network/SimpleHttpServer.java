@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class SimpleHttpServer {
   private int port;
@@ -58,6 +56,25 @@ public class SimpleHttpServer {
 
     public void setBody(byte[] body) {
       this.body = body;
+    }
+
+    @Override
+    public String toString() {
+      return "Request{"
+          + "method='"
+          + method
+          + '\''
+          + ", path='"
+          + path
+          + '\''
+          + ", version='"
+          + version
+          + '\''
+          + ", headers="
+          + headers
+          + ", body="
+          + new String(body)
+          + '}';
     }
   }
 
@@ -139,11 +156,24 @@ public class SimpleHttpServer {
   }
 
   private void handleRequest(Request request) {
-    // todo
+    System.out.println(request);
   }
 
-  private String getLine(InputStream in) {
-    return "";
+  private String getLine(InputStream in) throws IOException {
+    StringBuilder builder = new StringBuilder();
+    byte[] tmp = new byte[] {'\0'};
+    while (in.read(tmp) > 0) {
+      char c = (char) tmp[0];
+      if (c == '\r') {
+        in.mark(1);
+        if (in.read(tmp) > 0 && (char) tmp[0] == '\n') {
+          break;
+        }
+        in.reset();
+      }
+      builder.append(c);
+    }
+    return builder.toString();
   }
 
   private boolean isBlank(String str) {
@@ -156,5 +186,10 @@ public class SimpleHttpServer {
       }
     }
     return true;
+  }
+
+  public static void main(String[] args) {
+    SimpleHttpServer server = new SimpleHttpServer(6666, 3);
+    server.serve();
   }
 }
