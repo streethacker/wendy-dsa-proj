@@ -117,7 +117,7 @@ public class SimpleHttpServer {
 
     private String status;
 
-    private String description;
+    private String reason;
 
     private Map<String, String> headers;
 
@@ -151,12 +151,12 @@ public class SimpleHttpServer {
       this.status = status;
     }
 
-    public String getDescription() {
-      return description;
+    public String getReason() {
+      return reason;
     }
 
-    public void setDescription(String description) {
-      this.description = description;
+    public void setReason(String reason) {
+      this.reason = reason;
     }
 
     public Map<String, String> getHeaders() {
