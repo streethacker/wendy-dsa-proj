@@ -1,10 +1,12 @@
 package network;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class SimpleHttpServer {
@@ -147,7 +149,7 @@ public class SimpleHttpServer {
                 if (Objects.nonNull(body)) {
                   request.setBody(body);
                 }
-                handleRequest(request);
+                handleRequest(request, connection);
               } catch (IOException e) {
                 throw new RuntimeException("Fail to fetch input stream from connection");
               }
@@ -155,8 +157,43 @@ public class SimpleHttpServer {
     t.start();
   }
 
-  private void handleRequest(Request request) {
+  private void handleRequest(Request request, Socket connection) {
     System.out.println(request);
+    try (BufferedOutputStream out = new BufferedOutputStream(connection.getOutputStream())) {
+      StringBuilder builder = new StringBuilder();
+      // first line
+      builder.append("HTTP/1.1");
+      builder.append(" ");
+      builder.append("200");
+      builder.append(" ");
+      builder.append("OK");
+      builder.append("\r\n");
+
+      // "Gotcha!" -> byte[] -> byte[] length
+      String content = "Gotcha!";
+      byte[] contentInBytes = content.getBytes(StandardCharsets.UTF_8);
+
+      // headers: Content-Type: text/plain, Content-Length: x
+      builder.append("Content-Type");
+      builder.append(": ");
+      builder.append("text/plain");
+      builder.append("\r\n");
+
+      builder.append("Content-Lenght");
+      builder.append(": ");
+      builder.append(contentInBytes.length);
+      builder.append("\r\n");
+
+      // empty line
+      builder.append("\r\n");
+
+      String responseHeader = builder.toString();
+      out.write(responseHeader.getBytes(StandardCharsets.UTF_8));
+      out.write(content.getBytes(StandardCharsets.UTF_8));
+      out.flush();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   private String getLine(InputStream in) throws IOException {
